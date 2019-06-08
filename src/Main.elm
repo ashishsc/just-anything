@@ -1,9 +1,10 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Html exposing (Html, div, text)
-import Html.Attributes as Atrs
-import Html.Events exposing (onClick, onInput)
+import Element exposing (Element, column, el, row, text)
+import Element.Input as Input
+import Html exposing (Html)
+import Markdown as MarkdownParser
 
 
 type alias Model =
@@ -27,7 +28,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CreateNode ->
-            ( { model | questions = Markdown "<new>" :: model.questions }
+            ( { model | questions = Markdown "# new" :: model.questions }
             , Cmd.none
             )
 
@@ -36,24 +37,25 @@ view : Model -> Html Msg
 view model =
     let
         modelDebug =
-            div [] [ text (Debug.toString model) ]
+            el [] <| text (Debug.toString model)
+
+        questions =
+            List.indexedMap viewFormElement model.questions
+
+        createNodeButton =
+            Input.button []
+                { onPress = Just CreateNode
+                , label = text "Click me you fuck"
+                }
     in
-    div [] <|
-        [ modelDebug
-        , Html.button
-            [ onClick <| CreateNode ]
-            [ text "click me you fuck" ]
-        ]
-            ++ List.indexedMap
-                viewFormElement
-                model.questions
+    Element.layout [] <| column [] ([ modelDebug, createNodeButton ] ++ questions)
 
 
-viewFormElement : Int -> FormElement -> Html Msg
+viewFormElement : Int -> FormElement -> Element Msg
 viewFormElement i e =
     case e of
-        Markdown s ->
-            Html.text s
+        Markdown markdownStr ->
+            Element.html <| MarkdownParser.toHtml [] markdownStr
 
 
 main : Program () Model Msg
